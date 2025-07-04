@@ -1,0 +1,6 @@
+CREATE TABLE admin(
+    id BIGSERIAL NOT NULL,
+    chat_id BIGINT NOT NULL,
+    user_name VARCHAR(25) NOT NULL,
+    is_main_admin BOOLEAN DEFAULT FALSE NOT NULL
+);
