@@ -177,7 +177,7 @@ public class QueueService {
 
         List<Queue> queues = queueDao.getChatQueues(chatId);
 
-        if (queues.size() >= 5){
+        if (queues.size() >= ResponseConst.QUEUES_LIMIT_FOR_CHAT){
             return ResponseConst.QUEUES_LIMIT_MSG;
         }
 
