@@ -2,10 +2,14 @@ import Entity.Queue;
 import Repository.QueueDao;
 import Service.QueueNotificationService;
 import botMain.Bot;
+import com.sun.net.httpserver.HttpServer;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.flywaydb.core.Flyway;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 
@@ -59,6 +63,23 @@ public class Main {
 
             botToken = System.getenv("BOT_TOKEN");
         }
+
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+        HttpServer server = null;
+        try {
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        server.createContext("/", exchange -> {
+            String response = "Bot is alive!";
+            exchange.sendResponseHeaders(200, response.getBytes().length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
+            }
+        });
+        server.start();
+        System.out.println("HTTP server started on port " + port);
 
         try (TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication()) {
             Bot bot = new Bot(botToken);
