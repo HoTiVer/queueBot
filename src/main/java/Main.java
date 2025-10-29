@@ -91,7 +91,7 @@ public class Main {
             List<Queue> upcomingQueues = queueDao.getAllQueuesWithFutureStart();
 
             for (Queue queue : upcomingQueues) {
-                QueueNotificationService.getInstance().scheduleQueueNotification(queue);
+                QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
             }
 
             System.out.println("Bot successfully started!");

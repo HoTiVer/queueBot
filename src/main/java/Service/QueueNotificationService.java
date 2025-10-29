@@ -38,7 +38,7 @@ public class QueueNotificationService {
         this.bot = bot;
     }
 
-    public void scheduleQueueNotification(Queue queue) {
+    public void scheduleQueueStartNotification(Queue queue) {
         LocalDateTime targetDateTime = LocalDateTime.of(queue.getStartDate(), queue.getStartTime());
         long delayMillis = Duration.between(LocalDateTime.now(), targetDateTime).toMillis();
 

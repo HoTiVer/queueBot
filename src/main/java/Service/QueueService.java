@@ -116,23 +116,23 @@ public class QueueService {
         LocalTime now = LocalTime.now();
 
         if (today.isBefore(queue.getStartDate())){
-            return "day of joining the queue is: " + queue.getStartDate();
+            return "❌ day of joining the queue is: " + queue.getStartDate();
         }
 
         if (today.isEqual(queue.getStartDate()) && now.isBefore(queue.getStartTime())){
-            return "you can only join after: " + queue.getStartTime() + " " + queue.getStartDate();
+            return "❌ you can only join after: " + queue.getStartTime() + " " + queue.getStartDate();
         }
 
         for (var member : queue.getMembers()) {
             if (member.getPosition() == queuePosition) {
                 if (!member.getUserName().equals(userName)) {
-                    return userName + ", member with this position is already exist";
+                    return userName + ",❌ member with this position is already exist";
                 }
             }
 
             if (member.getUserName().equals(userName)) {
                 if (member.getPosition() == queuePosition) {
-                    return userName + ", you are already in this position in the queue: " + queueName;
+                    return userName + ",❌ you are already in this position in the queue: " + queueName;
                 }
 
                 boolean positionTaken = false;
@@ -144,12 +144,12 @@ public class QueueService {
                 }
 
                 if (positionTaken) {
-                    return userName + ", this position is already taken.";
+                    return userName + ",❌ this position is already taken.";
                 }
 
                 member.setPosition(queuePosition);
                 memberDao.update(member);
-                return userName + ", your position has been updated to: " + queuePosition;
+                return userName + ",✅ your position has been updated to: " + queuePosition;
             }
         }
 
@@ -163,7 +163,7 @@ public class QueueService {
         Member responseMember = memberDao.save(member);
 
         if (responseMember != null){
-            response = "you successfully added to queue " + queueName + " as " + queuePosition
+            response = "✅ " + userName + " you successfully added to queue " + queueName + " as " + queuePosition
                     + " member";
         }
 
@@ -215,7 +215,7 @@ public class QueueService {
 
         try {
             queueDao.save(queue);
-            QueueNotificationService.getInstance().scheduleQueueNotification(queue);
+            QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
         }
         catch (RuntimeException e){
             return "error: " + ResponseConst.CANNOT_CREATE_QUEUE;
@@ -488,7 +488,7 @@ public class QueueService {
             queue.setStartDate(date);
             queueDao.update(queue);
 
-            QueueNotificationService.getInstance().scheduleQueueNotification(queue);
+            QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
 
             return "Queue \"" + queue.getQueueName() + "\" time updated: " + startTime
                     + " - " + endTime + " on " + date;
