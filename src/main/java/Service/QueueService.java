@@ -177,30 +177,28 @@ public class QueueService {
 
         List<Queue> queues = queueDao.getChatQueues(chatId);
 
-        if (queues.size() >= ResponseConst.QUEUES_LIMIT_FOR_CHAT){
-            return ResponseConst.QUEUES_LIMIT_MSG;
-        }
-
         int size = textList.size();
+        if (size < 6) {
+            return "Incorrect format. Use: create <name> <startTime HH:MM> to <endTime HH:MM> <date DD.MM.YYYY>";
+        }
 
         Queue queue = new Queue();
         try {
             String queueName = String.join(" ", textList.subList(1, size - 4));
             for (var localQueue : queues) {
-                if (localQueue.getQueueName().equals(queueName)){
+                if (localQueue.getQueueName().equals(queueName)) {
                     return "Queue with name " + queueName + " already exist";
                 }
             }
             queue.setQueueName(queueName);
-
             queue.setChatId(chatId);
 
             LocalTime startTime = LocalTime.parse(textList.get(size - 4));
             LocalTime endTime = LocalTime.parse(textList.get(size - 2));
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-            LocalDate date = LocalDate.parse(textList.get(size - 1), formatter);
+            LocalDate date = LocalDate.parse(textList.get(size - 1),
+                    DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
-            if (!validateCorrectQueueTime(queues, startTime, endTime, date)){
+            if (!validateCorrectQueueTime(queues, startTime, endTime, date)) {
                 return ResponseConst.INCORRECT_TIME;
             }
 
@@ -208,20 +206,21 @@ public class QueueService {
             queue.setEndTime(endTime);
             queue.setStartDate(date);
 
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             return "error: " + ResponseConst.CANNOT_CREATE_QUEUE;
         }
 
         try {
             queueDao.save(queue);
             QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
-        }
-        catch (RuntimeException e){
+
+        } catch (RuntimeException e) {
             return "error: " + ResponseConst.CANNOT_CREATE_QUEUE;
         }
+
         return "new queue " + queue.getQueueName() + " created";
     }
+
 
     private boolean validateCorrectQueueTime(List<Queue> queues,
                                              LocalTime startTime,

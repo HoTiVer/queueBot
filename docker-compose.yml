@@ -1,9 +1,0 @@
-
-services:
-  bot:
-    container_name: queue-bot
-    build: .
-    env_file: .env
-    restart: unless-stopped
-    ports:
-      - "8080:8080"

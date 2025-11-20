@@ -35,7 +35,7 @@ ENVIRONMENT=<debug|prod>
 
 ## 🛡 Admin Commands
 
-- `create "queue_name" "start_time:end_time date"`  
+- `create "queue_name" "start_time to end_time date"`  
   Create a queue.  
   _Example:_ `create Lab 10:00 to 12:00 17.06.2025`
 
