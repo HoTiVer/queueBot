@@ -1,9 +1,11 @@
 package botMain;
 
 import Service.AdminService;
+import Service.QueueQueryService;
 import Service.QueueService;
 import common.BotUtils;
 import common.MemberStatus;
+import common.QueueUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
@@ -19,15 +21,20 @@ public class Bot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final AdminService adminService;
     private final QueueService queueService;
+    private final QueueQueryService queueQueryService;
     private final BotUtils botUtils;
+    private final QueueUtils queueUtils;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     public Bot(String botToken, AdminService adminService,
-               QueueService queueService, BotUtils botUtils) {
+               QueueService queueService, QueueQueryService queueQueryService,
+               BotUtils botUtils, QueueUtils queueUtils) {
         telegramClient = new OkHttpTelegramClient(botToken);
         this.adminService = adminService;
         this.queueService = queueService;
+        this.queueQueryService = queueQueryService;
         this.botUtils = botUtils;
+        this.queueUtils = queueUtils;
     }
 
     @Override
@@ -80,11 +87,11 @@ public class Bot implements LongPollingSingleThreadUpdateConsumer {
                     }
                     break;
                 case "list":
-                    response = queueService.getChatQueuesNamesAndMiniInfo(chatId);
+                    response = queueQueryService.getChatQueuesNamesAndMiniInfo(chatId);
                     sendMessage(chatId, response);
                     break;
                 case "info":
-                    response = queueService.getQueueInfo(chatId, text);
+                    response = queueQueryService.getQueueInfo(chatId, text);
                     sendMessage(chatId, response);
                     break;
                 case "insert":

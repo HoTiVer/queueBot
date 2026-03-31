@@ -4,9 +4,11 @@ import Repository.MemberDao;
 import Repository.QueueDao;
 import Service.AdminService;
 import Service.QueueNotificationService;
+import Service.QueueQueryService;
 import Service.QueueService;
 import botMain.Bot;
 import common.BotUtils;
+import common.QueueUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.flywaydb.core.Flyway;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
@@ -38,14 +40,19 @@ public class Main {
                      new TelegramBotsLongPollingApplication()) {
 
             BotUtils botUtils = new BotUtils();
+            QueueUtils queueUtils = new QueueUtils();
+
             AdminDao adminDao = new AdminDao();
             QueueDao queueDao = new QueueDao();
             MemberDao memberDao = new MemberDao();
 
             AdminService adminService = new AdminService(adminDao);
-            QueueService queueService = new QueueService(queueDao, memberDao);
+            QueueService queueService = new QueueService(queueDao, memberDao, queueUtils);
+            QueueQueryService queueQueryService = new QueueQueryService(queueDao);
 
-            Bot bot = new Bot(botToken, adminService, queueService, botUtils);
+            Bot bot = new Bot(botToken, adminService,
+                    queueService, queueQueryService,
+                    botUtils, queueUtils);
             botsApplication.registerBot(botToken, bot);
 
             QueueNotificationService.getInstance().setBot(bot);

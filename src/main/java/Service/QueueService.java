@@ -13,6 +13,7 @@ import Entity.Member;
 import Entity.Queue;
 import Repository.MemberDao;
 import Repository.QueueDao;
+import common.QueueUtils;
 import common.ResponseConst;
 import common.MemberStatus;
 
@@ -21,95 +22,23 @@ public class QueueService {
 
     private final QueueDao queueDao;
     private final MemberDao memberDao;
+    private final QueueUtils queueUtils;
     ZoneId zoneId = ZoneId.of("Europe/Kyiv");
 
-    public QueueService(QueueDao queueDao, MemberDao memberDao) {
+    public QueueService(QueueDao queueDao, MemberDao memberDao,
+                        QueueUtils queueUtils) {
         this.queueDao = queueDao;
         this.memberDao = memberDao;
-    }
-
-    public String getChatQueuesNamesAndMiniInfo(Long chatId) {
-        String response = "there are no queues yet";
-        List<Queue> queues = queueDao.getChatQueues(chatId);
-
-        StringBuilder result = new StringBuilder();
-        int counter = 0;
-
-        for (var queue : queues){
-            result.append(++counter).append(")").append(queue.getQueueName()).append("\n");
-            result.append("Fast join time: ");
-            result.append(queue.getStartTime());
-            result.append(" to ");
-            result.append(queue.getEndTime());
-            result.append("\n");
-            result.append("Date: ");
-            result.append(queue.getStartDate());
-            result.append("\n");
-        }
-
-        if (!result.toString().isEmpty()){
-            response = result.toString();
-        }
-
-        return response;
-    }
-
-    public String getQueueInfo(Long chatId, String text) {
-        String queueName = text.substring(5);
-        Queue queue;
-        try {
-            queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
-        } catch (Exception e){
-            return ResponseConst.QUEUE_DOES_NOT_EXIST;
-        }
-
-        if (queue == null){
-            return ResponseConst.QUEUE_DOES_NOT_EXIST;
-        }
-
-        StringBuilder builder = new StringBuilder();
-
-        builder.append(queueName).append(": ").append("\n");
-        builder.append("Fast join time: ")
-                .append(queue.getStartTime())
-                .append(" to ")
-                .append(queue.getEndTime())
-                .append("\n")
-                .append("Date: ")
-                .append(queue.getStartDate())
-                .append("\n");
-
-        List<Member> sortedMembers = new ArrayList<>(queue.getMembers());
-
-        if (sortedMembers.isEmpty()){
-            builder.append("queue is null");
-        }
-
-        sortedMembers.sort(Comparator.comparingInt(Member::getPosition));
-
-        for (var member : sortedMembers){
-            builder.append(member.getPosition()).append(")")
-                    .append(member.getUserName()).append(" ")
-                    .append(member.getMemberStatus()).append("\n");
-        }
-
-        builder.append("\n");
-
-        builder.append("To mark as completed: complete ").append(queueName);
-        builder.append("\n");
-        builder.append("To retake: retake ").append(queueName);
-
-
-        return builder.toString();
+        this.queueUtils = queueUtils;
     }
 
     public synchronized String joinQueue(Long chatId, String userName, String text) {
         String response = "error";
-        int queuePosition = getQueuePosition(text);
+        int queuePosition = QueueUtils.getQueuePosition(text);
         if (queuePosition <= 0){
             return ResponseConst.POSITIVE_POSITION;
         }
-        String queueName = getQueueName(text);
+        String queueName = QueueUtils.getQueueName(text);
 
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
 
@@ -203,7 +132,7 @@ public class QueueService {
             LocalDate date = LocalDate.parse(textList.get(size - 1),
                     DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
-            if (!validateCorrectQueueTime(queues, startTime, endTime, date)) {
+            if (!QueueUtils.validateCorrectQueueTime(queues, startTime, endTime, date)) {
                 return ResponseConst.INCORRECT_TIME;
             }
 
@@ -224,26 +153,6 @@ public class QueueService {
         }
 
         return "new queue " + queue.getQueueName() + " created";
-    }
-
-
-    private boolean validateCorrectQueueTime(List<Queue> queues,
-                                             LocalTime startTime,
-                                             LocalTime endTime,
-                                             LocalDate selectedDate) {
-        for (Queue queue : queues) {
-            if (!queue.getStartDate().equals(selectedDate)) {
-                continue;
-            }
-
-            LocalTime existingStart = queue.getStartTime();
-            LocalTime existingEnd = queue.getEndTime();
-
-            if (!(endTime.isBefore(existingStart) || startTime.isAfter(existingEnd))) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public void deleteQueue(Long chatId, String text) {
@@ -300,11 +209,11 @@ public class QueueService {
     }
 
     public synchronized String swapMembers(Long chatId, String text, String userName) {
-        int queuePosition = getQueuePosition(text);
+        int queuePosition = QueueUtils.getQueuePosition(text);
         if (queuePosition <= 0){
             return ResponseConst.POSITIVE_POSITION;
         }
-        String queueName = getQueueName(text);
+        String queueName = QueueUtils.getQueueName(text);
 
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
 
@@ -357,42 +266,10 @@ public class QueueService {
         return "you cannot swap";
     }
 
-    private String getQueueName(String text){
-        String[] parts = text.trim().split("\\s+");
-        if (parts.length < 3) {
-            throw new IllegalArgumentException("Input must contain at least 3 words.");
-        }
-        StringBuilder middle = new StringBuilder();
-        for (int i = 1; i < parts.length - 1; i++) {
-            middle.append(parts[i]);
-            if (i < parts.length - 2) {
-                middle.append(" ");
-            }
-        }
-
-        return middle.toString();
-    }
-
-    private int getQueuePosition(String text){
-        String[] parts = text.trim().split("\\s+");
-        if (parts.length < 2) {
-            throw new IllegalArgumentException();
-        }
-        return Integer.parseInt(parts[parts.length - 1]);
-    }
-
-    private String getNameWithoutPos(String text){
-        if (text != null && !text.isBlank()) {
-            String[] words = text.trim().split("\\s+");
-            return words[words.length - 1];
-        }
-        return "";
-    }
-
     public String updateMemberStatus(Long chatId, String text,
                                      String userName, MemberStatus newStatus) {
 
-        String queueName = getNameWithoutPos(text);
+        String queueName = QueueUtils.getNameWithoutPos(text);
         if (queueName.isEmpty()){
             return "unknown command";
         }
@@ -454,8 +331,7 @@ public class QueueService {
         queue.setMembers(members);
         queueDao.update(queue);
 
-        return queueName + " rearranged new.\nqueue view: \n \n" +
-                getQueueInfo(chatId, "info " + queueName);
+        return queueName + " is rearranged";
     }
 
     public String setNewQueueFastTime(Long chatId, String text) {
@@ -480,7 +356,7 @@ public class QueueService {
                     .filter(q -> !q.getId().equals(queue.getId()))
                     .collect(Collectors.toList());
 
-            boolean isCorrectTime = validateCorrectQueueTime(queuesInChat, startTime, endTime, date);
+            boolean isCorrectTime = QueueUtils.validateCorrectQueueTime(queuesInChat, startTime, endTime, date);
             if (!isCorrectTime) {
                 return "Time conflict with another queue on " + date + ". Choose a different time.";
             }
