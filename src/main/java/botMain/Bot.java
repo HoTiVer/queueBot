@@ -17,13 +17,17 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 public class Bot implements LongPollingSingleThreadUpdateConsumer {
 
     private final TelegramClient telegramClient;
-    private final QueueService queueService = new QueueService();
-    private final AdminService adminService = new AdminService();
-    private final BotUtils botUtils = new BotUtils();
+    private final AdminService adminService;
+    private final QueueService queueService;
+    private final BotUtils botUtils;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public Bot(String botToken) {
+    public Bot(String botToken, AdminService adminService,
+               QueueService queueService, BotUtils botUtils) {
         telegramClient = new OkHttpTelegramClient(botToken);
+        this.adminService = adminService;
+        this.queueService = queueService;
+        this.botUtils = botUtils;
     }
 
     @Override

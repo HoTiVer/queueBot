@@ -9,7 +9,11 @@ import java.util.Random;
 
 public class AdminService {
 
-    private final AdminDao adminDao = new AdminDao();
+    private final AdminDao adminDao;
+
+    public AdminService(AdminDao adminDao) {
+        this.adminDao = adminDao;
+    }
 
     public boolean validateQueueAdmin(Long chatId, String userName){
         List<Admin> chatAdmins = adminDao.getChatAdmins(chatId);

@@ -19,9 +19,14 @@ import common.MemberStatus;
 
 public class QueueService {
 
-    private final QueueDao queueDao = new QueueDao();
-    private final MemberDao memberDao = new MemberDao();
+    private final QueueDao queueDao;
+    private final MemberDao memberDao;
     ZoneId zoneId = ZoneId.of("Europe/Kyiv");
+
+    public QueueService(QueueDao queueDao, MemberDao memberDao) {
+        this.queueDao = queueDao;
+        this.memberDao = memberDao;
+    }
 
     public String getChatQueuesNamesAndMiniInfo(Long chatId) {
         String response = "there are no queues yet";
