@@ -13,6 +13,7 @@ import Entity.Member;
 import Entity.Queue;
 import Repository.MemberDao;
 import Repository.QueueDao;
+import common.AppConfig;
 import common.QueueUtils;
 import common.ResponseConst;
 import common.MemberStatus;
@@ -33,16 +34,15 @@ public class QueueService {
     }
 
     public synchronized String joinQueue(Long chatId, String userName, String text) {
-        String response = "error";
         int queuePosition = QueueUtils.getQueuePosition(text);
-        if (queuePosition <= 0){
+        if (queuePosition <= 0) {
             return ResponseConst.POSITIVE_POSITION;
         }
         String queueName = QueueUtils.getQueueName(text);
 
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
 
-        if (queue == null){
+        if (queue == null) {
             return ResponseConst.QUEUE_DOES_NOT_EXIST;
         }
 
@@ -94,78 +94,70 @@ public class QueueService {
                 .memberStatus(MemberStatus.IN_PROCESS)
                 .build();
 
-        Member responseMember = memberDao.save(member);
+        memberDao.save(member);
 
-        if (responseMember != null){
-            response = "✅ " + userName + " you successfully added to queue " + queueName + " as " + queuePosition
-                    + " member";
-        }
-
-        return response;
+        return "✅ " + userName + " you successfully added to queue " + queueName
+                + " as " + queuePosition + " member";
     }
 
     public String createQueue(Long chatId, String text) {
-        List<String> textList = Arrays.stream(text.trim().split("\\s+"))
+        List<String> words = Arrays.stream(text.trim().split("\\s+"))
                 .filter(s -> !s.isBlank())
                 .toList();
 
-        List<Queue> queues = queueDao.getChatQueues(chatId);
-
-        int size = textList.size();
+        int size = words.size();
         if (size < 6) {
             return "Incorrect format. Use: create <name> <startTime HH:MM> to <endTime HH:MM> <date DD.MM.YYYY>";
         }
 
-        Queue queue = new Queue();
-        try {
-            String queueName = String.join(" ", textList.subList(1, size - 4));
-            for (var localQueue : queues) {
-                if (localQueue.getQueueName().equals(queueName)) {
-                    return "Queue with name " + queueName + " already exist";
-                }
-            }
-            queue.setQueueName(queueName);
-            queue.setChatId(chatId);
+        List<Queue> queues = queueDao.getChatQueues(chatId);
+        if (queues.size() >= AppConfig.QueueConfig.MAX_QUEUE_COUNT)
+            return "Queue limit reached";
 
-            LocalTime startTime = LocalTime.parse(textList.get(size - 4));
-            LocalTime endTime = LocalTime.parse(textList.get(size - 2));
-            LocalDate date = LocalDate.parse(textList.get(size - 1),
-                    DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
-            if (!QueueUtils.validateCorrectQueueTime(queues, startTime, endTime, date)) {
-                return ResponseConst.INCORRECT_TIME;
-            }
+        String queueName = String.join(" ", words.subList(1, size - 4));
 
-            queue.setStartTime(startTime);
-            queue.setEndTime(endTime);
-            queue.setStartDate(date);
-
-        } catch (Exception e) {
-            return "error: " + ResponseConst.CANNOT_CREATE_QUEUE;
+        boolean nameExists = queues
+                .stream()
+                .anyMatch(q -> q.getQueueName().equalsIgnoreCase(queueName));
+        if (nameExists) {
+            return "Queue with name " + queueName + " already exist";
         }
 
-        try {
-            queueDao.save(queue);
-            QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
+        LocalTime startTime = LocalTime.parse(words.get(size - 4));
+        LocalTime endTime = LocalTime.parse(words.get(size - 2));
+        LocalDate date = LocalDate.parse(words.get(size - 1),
+                DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
-        } catch (RuntimeException e) {
-            return "error: " + ResponseConst.CANNOT_CREATE_QUEUE;
+        if (!QueueUtils.validateCorrectQueueTime(queues, startTime, endTime, date)) {
+            return ResponseConst.INCORRECT_TIME;
         }
 
-        return "new queue " + queue.getQueueName() + " created";
+        Queue queue = new Queue(
+                queueName,
+                chatId,
+                startTime,
+                endTime,
+                date
+        );
+
+        queueDao.save(queue);
+        QueueNotificationService.getInstance().scheduleQueueStartNotification(queue);
+
+        return "New queue " + queue.getQueueName() + " created";
     }
 
     public void deleteQueue(Long chatId, String text) {
         String queueName = text.substring(7);
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
-        Long id = queue.getId();
 
-        queueDao.delete(id);
+        queueDao.delete(queue.getId());
 
         QueueNotificationService notificationService = QueueNotificationService.getInstance();
-        notificationService.cancelQueueNotification(id);
+        notificationService.cancelQueueNotification(queue.getId());
     }
 
+    //TODO make new logic
     public String leaveQueue(Long chatId, String userName, String text) {
         String queueName = text.substring(6);
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
@@ -184,14 +176,12 @@ public class QueueService {
             }
             return "You have left the queue: " + queueName;
         }
-        return "error";
+        return "";
     }
 
     public synchronized String fastQueueJoin(Long chatId, String text, String userName){
         String response = "no queues for fast join";
         List<Queue> queues = queueDao.getChatQueues(chatId);
-
-        String queueName;
 
         for (var queue : queues){
             LocalTime currentTime = LocalTime.now(zoneId);
@@ -199,7 +189,7 @@ public class QueueService {
                     && currentTime.isBefore(queue.getEndTime())
                     && queue.getStartDate().equals(LocalDate.now(zoneId))){
 
-                queueName = queue.getQueueName();
+                String queueName = queue.getQueueName();
 
                 String joinCommand = "join " + queueName + " " + text;
                 response = joinQueue(chatId, userName, joinCommand);

@@ -35,4 +35,14 @@ public class Queue {
 
     @Column(name = "start_date")
     LocalDate startDate;
+
+    public  Queue(String queueName, Long chatId,
+                  LocalTime startTime, LocalTime endTime,
+                  LocalDate startDate) {
+        this.queueName = queueName;
+        this.chatId = chatId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.startDate = startDate;
+    }
 }
