@@ -79,7 +79,7 @@ public class QueueQueryService {
         for (var member : sortedMembers){
             builder.append(member.getPosition()).append(")")
                     .append(member.getUserName()).append(" ")
-                    .append(member.getMemberStatus()).append("\n");
+                    .append(member.getMemberStatus().getStatus()).append("\n");
         }
 
         builder.append("\n");
