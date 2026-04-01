@@ -157,7 +157,6 @@ public class QueueService {
         notificationService.cancelQueueNotification(queue.getId());
     }
 
-    //TODO make new logic
     public String leaveQueue(Long chatId, String userName, String text) {
         String queueName = text.substring(6);
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
@@ -173,8 +172,8 @@ public class QueueService {
             }
             if (memberId != 0) {
                 memberDao.delete(memberId);
+                return "You have left the queue: " + queueName;
             }
-            return "You have left the queue: " + queueName;
         }
         return "";
     }
@@ -203,10 +202,8 @@ public class QueueService {
         if (queuePosition <= 0){
             return ResponseConst.POSITIVE_POSITION;
         }
-        String queueName = QueueUtils.getQueueName(text);
 
-        Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
-
+        Queue queue = queueDao.getQueueByChatIdAndName(chatId, QueueUtils.getQueueName(text));
         if (queue == null){
             return ResponseConst.QUEUE_DOES_NOT_EXIST;
         }
@@ -297,7 +294,6 @@ public class QueueService {
 
         if (queue == null) {
             return ResponseConst.QUEUE_DOES_NOT_EXIST;
-
         }
 
         List<Member> members = new ArrayList<>(queue.getMembers());
@@ -378,14 +374,10 @@ public class QueueService {
 
         String queueName = matcher.group(1);
         String userName = matcher.group(2);
-        int position;
-        try {
-            position = Integer.parseInt(matcher.group(3));
-            if (position <= 0) {
-                return ResponseConst.POSITIVE_POSITION;
-            }
-        } catch (NumberFormatException e) {
-            return "Invalid position format.";
+        int position = Integer.parseInt(matcher.group(3));
+
+        if (position <= 0) {
+            return ResponseConst.POSITIVE_POSITION;
         }
 
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
@@ -410,12 +402,7 @@ public class QueueService {
             return "Position exceeds the current queue length. Max available: " + (maxPosition + 1);
         }
 
-        for (Member member : members) {
-            if (member.getPosition() >= position) {
-                member.setPosition(member.getPosition() + 1);
-                memberDao.update(member);
-            }
-        }
+        memberDao.incrementPositionsFrom(queue.getId(), position);
 
         Member newMember = Member.builder()
                 .userName(userName)
@@ -457,21 +444,17 @@ public class QueueService {
         Member memberToRemove = memberToRemoveOpt.get();
         int removedPosition = memberToRemove.getPosition();
 
-        try {
-            memberDao.delete(memberToRemove.getId());
 
-            members.stream()
-                    .filter(m -> m.getPosition() > removedPosition)
-                    .forEach(m -> {
-                        m.setPosition(m.getPosition() - 1);
-                        memberDao.update(m);
-                    });
+        memberDao.delete(memberToRemove.getId());
 
-            return "User " + userName + " has been removed from the queue \"" + queueName +
-                    "\". Positions have been updated.";
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return "Failed to remove user " + userName + ".";
-        }
+        members.stream()
+                .filter(m -> m.getPosition() > removedPosition)
+                .forEach(m -> {
+                    m.setPosition(m.getPosition() - 1);
+                    memberDao.update(m);
+                });
+
+        return "User " + userName + " has been removed from the queue \"" + queueName +
+                "\". Positions have been updated.";
     }
 }
