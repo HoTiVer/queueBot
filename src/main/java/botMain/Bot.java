@@ -32,7 +32,7 @@ public class Bot implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
-        if (!update.hasMessage() && !update.getMessage().hasText()) return;
+        if (!update.hasMessage() || !update.getMessage().hasText()) return;
 
         String text = update.getMessage().getText().trim();
         Long chatId = update.getMessage().getChatId();
