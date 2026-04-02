@@ -6,7 +6,9 @@ import Service.AdminService;
 import Service.QueueNotificationService;
 import Service.QueueQueryService;
 import Service.QueueService;
-import botMain.Bot;
+import botMain.*;
+import botMain.commands.CommandDispatcher;
+import botMain.commands.CommandInitializer;
 import common.BotUtils;
 import common.QueueUtils;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -50,9 +52,12 @@ public class Main {
             QueueService queueService = new QueueService(queueDao, memberDao, queueUtils);
             QueueQueryService queueQueryService = new QueueQueryService(queueDao);
 
-            Bot bot = new Bot(botToken, adminService,
-                    queueService, queueQueryService,
-                    botUtils, queueUtils);
+            CommandDispatcher commandDispatcher = new CommandDispatcher(
+                    adminService,
+                    CommandInitializer.initCommands(queueService, queueQueryService, adminService)
+            );
+
+            Bot bot = new Bot(botToken, queueService, botUtils, commandDispatcher);
             botsApplication.registerBot(botToken, bot);
 
             QueueNotificationService.getInstance().setBot(bot);

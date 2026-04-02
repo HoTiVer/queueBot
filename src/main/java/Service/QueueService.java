@@ -147,7 +147,7 @@ public class QueueService {
         return "New queue " + queue.getQueueName() + " created";
     }
 
-    public void deleteQueue(Long chatId, String text) {
+    public String deleteQueue(Long chatId, String text) {
         String queueName = text.substring(7);
         Queue queue = queueDao.getQueueByChatIdAndName(chatId, queueName);
 
@@ -155,6 +155,8 @@ public class QueueService {
 
         QueueNotificationService notificationService = QueueNotificationService.getInstance();
         notificationService.cancelQueueNotification(queue.getId());
+
+        return "Queue " + queueName + " has been deleted.";
     }
 
     public String leaveQueue(Long chatId, String userName, String text) {
