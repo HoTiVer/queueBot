@@ -25,7 +25,7 @@ You need a `.env` file with:
 DB_URL=<your_database_url>,
 DB_USER=<your_database_user>,
 DB_PASSWORD=<your_database_password>,
-MAX_QUEUE_COUNT=<number>
+MAX_QUEUE_COUNT=<max_count>
 
 ---
 
