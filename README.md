@@ -22,14 +22,10 @@ A lightweight Telegram bot for **simple queue management in group chats**, e.g.,
 
 You need a `.env` file with:
 
-DB_URL=<your_database_url>
-DB_USER=<your_database_user>
-DB_PASSWORD=<your_database_password>
-ENVIRONMENT=<debug|prod>
-
-
-> ⚠️ The bot reads from `.env` only when `ENVIRONMENT=debug`.  
-> For `ENVIRONMENT=prod`, configure environment variables on your server.
+DB_URL=<your_database_url>,
+DB_USER=<your_database_user>,
+DB_PASSWORD=<your_database_password>,
+MAX_QUEUE_COUNT=<number>
 
 ---
 
