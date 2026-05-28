@@ -3,6 +3,7 @@ package botMain.commands.BaseAdminCommands;
 import Service.AdminService;
 import botMain.commands.BotCommand;
 import botMain.commands.CommandContext;
+import botMain.commands.createCommands.RegisterFirstAdminCommand;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class AdminBaseCommand implements BotCommand {
         subCommands.put("reg", new RegisterAdminSub(adminService));
         subCommands.put("del", new DeleteAdminSub(adminService));
         subCommands.put("raise", new RaiseAdminSub(adminService));
+        subCommands.put("first-reg", new RegisterFirstAdminCommand(adminService));
     }
 
     @Override

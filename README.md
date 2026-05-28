@@ -1,6 +1,6 @@
-# 📋 Telegram Queue Bot
+# Telegram Queue Bot
 
-## 🤖 Purpose
+## Purpose
 
 A lightweight Telegram bot for **simple queue management in group chats**, e.g., for lab submissions, presentations, or turn-taking.
 
@@ -9,7 +9,7 @@ A lightweight Telegram bot for **simple queue management in group chats**, e.g.,
 
 ---
 
-## ⚙️ How it works
+## How it works
 
 - During auto-registration, users simply **send a number to claim a position**.
 - If something is wrong (e.g., position taken), the bot will notify immediately.
@@ -18,7 +18,7 @@ A lightweight Telegram bot for **simple queue management in group chats**, e.g.,
 
 ---
 
-## 🛠 Environment Setup
+## Environment Setup
 
 You need a `.env` file with:
 
@@ -29,7 +29,7 @@ MAX_QUEUE_COUNT=<max_count>
 
 ---
 
-## 🛡 Admin Commands
+## Admin Commands
 
 - `create "queue_name" "start_time to end_time date"`  
   Create a queue.  
@@ -52,7 +52,7 @@ MAX_QUEUE_COUNT=<max_count>
 
 ---
 
-## 👥 User Commands
+## User Commands
 
 - `list`  
   View all queues in the chat.
@@ -77,13 +77,13 @@ MAX_QUEUE_COUNT=<max_count>
 
 ---
 
-## 🛡 Admin Management
+## Admin Management
 
 - `admins`  
   Show the list of admins.
 
 - `admin reg @username`  
-  Register a new admin. If there are no admins yet, `admin reg` alone makes you the main admin.
+  Register a new admin.
 
 - `admin del @username`  
   Remove an admin. If the main admin removes themselves, a random admin becomes the new main admin.
@@ -91,9 +91,12 @@ MAX_QUEUE_COUNT=<max_count>
 - `admin raise @username`  
   Promote an admin to the main admin role.
 
+- `admin first-reg @username`
+  Register first admin makes this user the main admin.
+
 ---
 
-## ℹ️ Features
+## Features
 
 ✅ Pre-registration for users by admins.  
 ✅ Automatic position shifting when someone leaves the queue.  
